@@ -51,8 +51,33 @@ void TeXie::handle_line(String line)
 		}
 		return;
 	} else {
-		(*read_callback)(line);
+		(*read_callback)(_line_to_dataset(line));
 	}
+}
+
+dataset TeXie::_line_to_dataset(String line)
+{
+	if (line.substring(0, 2) == "AR")
+	{
+		int sep;
+		for (int i = 2; i < line.length(); i++)
+		{
+			if(line.substring(i, i+1) == ":")
+			{
+				sep = i;
+				break;
+			}
+		}
+		dataset d;
+		d.stream = line.substring(2, sep);
+		d.type = line.substring(sep+1, sep+2).charAt(0);
+		d.value = line.substring(sep+2);
+		Serial.println("Got read value: "+d.stream+" ("+d.type+") "+d.value);
+		return d;
+	}/* else {
+		dataset d;
+		return d;
+	}*/
 }
 
 bool TeXie::read(String stream)
@@ -113,7 +138,7 @@ void TeXie::run()
 	}
 }
 
-void TeXie::set_read_callback(void (*callback)(String line))
+void TeXie::set_read_callback(void (*callback)(dataset d))
 {
 	read_callback = callback;
 }
@@ -123,16 +148,39 @@ char* TeXie::status()
 	return _state;
 }
 
+bool TeXie::write(String stream, double value)
+{
+	if(_state != "ready")
+	{
+		return false;
+	}
+	String s;
+	s = String(value, 10);
+	while(s.substring(s.length()-1) == "0")
+	{
+		s = s.substring(0, s.length()-1);
+	}
+	Serial.print("WF"+stream+":");
+	client.print("WF"+stream+":");
+	Serial.print(s);
+	client.print(s);
+	client.print("\n");
+	Serial.print("\n");
+	client.flush();
+	return true;
+}
+
 bool TeXie::write(String stream, int value)
 {
 	if(_state != "ready")
 	{
 		return false;
 	}
+	String v = String(value, 10);
 	Serial.print("WI"+stream+":");
 	client.print("WI"+stream+":");
-	Serial.print(value);
-	client.print(value);
+	Serial.print(v);
+	client.print(v);
 	client.print("\n");
 	Serial.print("\n");
 	client.flush();

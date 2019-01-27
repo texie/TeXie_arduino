@@ -8,6 +8,13 @@
 #include <ESP8266WiFiMulti.h>
 #endif
 
+struct dataset
+{
+	String stream;
+	char type;
+	String value;
+};
+
 class TeXie
 {
 	public:
@@ -17,19 +24,22 @@ class TeXie
 		bool connect();
 		void handle_line(String line);
 		bool read(String stream);
+		void (*read_callback)(dataset d);
 		void run();
-		void set_read_callback(void (*callback)(String line));
-		char* status();
+		bool write(String stream, double value);
 		bool write(String stream, int value);
-		void (*read_callback)(String line);
+		void set_read_callback(void (*callback)(dataset d));
+		char* status();
 	private:
 		String _account;
+		WiFiClient client;
+		String _line;
+		dataset _line_to_dataset(String line);
+		ESP8266WiFiMulti wifiMulti;
+		bool _wifi_state;
 		String _secret;
 		char* _state;
-		bool _wifi_state;
-		String _line;
-		WiFiClient client;
-		ESP8266WiFiMulti wifiMulti;
+		
 };
 
 #endif
