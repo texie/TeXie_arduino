@@ -49,7 +49,7 @@ bool TeXie::connect()
 	{
 		return false;
 	}
-	Serial.println("Connecting...");
+	//Serial.println("Connecting...");
 	if (_apicount == 0)
 	{
 		IPAddress tmp;
@@ -82,7 +82,7 @@ bool TeXie::connect_groundstation()
 	{
 		return false;
 	}
-	Serial.println("Connecting...");
+	//Serial.println("Connecting...");
 	
 	if(client.connect(_groundstation, _port))
 	{
@@ -100,7 +100,7 @@ void TeXie::handle_line(String line)
 	{
 		String challenge = line.substring(3);
 		String response = "XA"+_account+":"+sha1(challenge+_secret);
-		Serial.print("Answer: ");Serial.println(response);
+		//Serial.print("Answer: ");Serial.println(response);
 		client.print(response);client.print("\n");
 		client.flush();
 		_state = "auth2";
@@ -134,7 +134,7 @@ dataset TeXie::_line_to_dataset(String line)
 		d.stream = line.substring(2, sep);
 		d.type = line.substring(sep+1, sep+2).charAt(0);
 		d.value = line.substring(sep+2);
-		Serial.println("Got read value: "+d.stream+" ("+d.type+") "+d.value);
+		//Serial.println("Got read value: "+d.stream+" ("+d.type+") "+d.value);
 		return d;
 	}/* else {
 		dataset d;
@@ -148,10 +148,10 @@ bool TeXie::read(String stream)
 	{
 		return false;
 	}
-	Serial.print("R"+stream);
+	//Serial.print("R"+stream);
 	client.print("R"+stream);
 	client.print("\n");
-	Serial.print("\n");
+	//Serial.print("\n");
 	client.flush();
 	return true;
 }
@@ -161,13 +161,13 @@ void TeXie::run()
 	if (wifiMulti.run() != WL_CONNECTED && _wifi_state == true) {
 		_wifi_state = false;
 		_state = "disconnected";
-		Serial.println("WiFi disconnected connected!");
+		//Serial.println("WiFi disconnected connected!");
 	} else if  (wifiMulti.run() == WL_CONNECTED && _wifi_state == false) {
 		_wifi_state = true;
-		Serial.println("Got connected to wifi...");
+		/*Serial.println("Got connected to wifi...");
 		Serial.println("WiFi connected");
 		Serial.println("IP address: ");
-		Serial.println(WiFi.localIP());//
+		Serial.println(WiFi.localIP());//*/
 		TeXie::connect();
 	}
 
@@ -182,14 +182,14 @@ void TeXie::run()
 			char thisChar = client.read();
 			String nl = "\n";
 			_line += thisChar;
-			Serial.write(thisChar);
+			//Serial.write(thisChar);
 			if (_line.substring(_line.length()-1) == nl)
 			{
 				_line = _line.substring(0, _line.length()-1);
-				Serial.println("\nGot line:");
+				/*Serial.println("\nGot line:");
 				Serial.print(">");
 				Serial.print(_line);
-				Serial.println("<");	
+				Serial.println("<");//*/
 				TeXie::handle_line(_line);
 				_line = "";			
 			}
@@ -226,12 +226,12 @@ bool TeXie::write(String stream, double value)
 	{
 		s = s.substring(0, s.length()-1);
 	}
-	Serial.print("WF"+stream+":");
+	//Serial.print("WF"+stream+":");
 	client.print("WF"+stream+":");
-	Serial.print(s);
+	//Serial.print(s);
 	client.print(s);
 	client.print("\n");
-	Serial.print("\n");
+	//Serial.print("\n");
 	client.flush();
 	return true;
 }
@@ -243,12 +243,12 @@ bool TeXie::write(String stream, int value)
 		return false;
 	}
 	String v = String(value, 10);
-	Serial.print("WI"+stream+":");
+	//Serial.print("WI"+stream+":");
 	client.print("WI"+stream+":");
-	Serial.print(v);
+	//Serial.print(v);
 	client.print(v);
 	client.print("\n");
-	Serial.print("\n");
+	//Serial.print("\n");
 	client.flush();
 	return true;
 }
