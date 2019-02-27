@@ -9,9 +9,25 @@
 TeXie::TeXie()
 {}
 
+TeXie::TeXie(IPAddress groundstation, int port)
+{
+	_account = "";
+	_apicount = 0;
+	_apicount_current = 0;
+	_connection_lock = 0;
+	_secret = "";
+	_state = "disconnected";
+	_wifi_state = false;
+	_groundstation = groundstation;
+	_port = port;
+}
+
 TeXie::TeXie(char* account, char* secret)
 {
 	_account = account;
+	_apicount = 0;
+	_apicount_current = 0;
+	_connection_lock = 0;
 	_secret = secret;
 	_state = "disconnected";
 	_wifi_state = false;
@@ -24,12 +40,58 @@ void TeXie::addAP(char* ssid, char* password)
 
 bool TeXie::connect()
 {
-	if(client.connect("api.texie.io", 23456))
+	if (_account == "" and _secret == "")
+	{
+		return TeXie::connect_groundstation();
+
+	}
+	if (millis() < _connection_lock)
+	{
+		return false;
+	}
+	Serial.println("Connecting...");
+	if (_apicount == 0)
+	{
+		IPAddress tmp;
+		WiFi.hostByName("api.count.texie.io", tmp, 5000);
+		_apicount = tmp[3];
+		_apicount_current = random(1, _apicount+1);
+	}
+	_apicount_current += 1;
+	if (_apicount_current > _apicount)
+		_apicount_current = 1;
+	String hostname = "api"+String(_apicount_current)+".texie.io";
+
+	char host[hostname.length()+1];
+	hostname.toCharArray(host, hostname.length()+1);
+	IPAddress remote_addr;
+	WiFi.hostByName(host, remote_addr, 5000);
+	if(client.connect(remote_addr, 10100))
 	{
 		_state = "connected";
 	} else {
 		_state = "disconnected";
+		_connection_lock = millis()+10000;
 	}
+	return true;
+}
+
+bool TeXie::connect_groundstation()
+{
+	if (millis() < _connection_lock)
+	{
+		return false;
+	}
+	Serial.println("Connecting...");
+	
+	if(client.connect(_groundstation, _port))
+	{
+		_state = "ready";
+	} else {
+		_state = "disconnected";
+		_connection_lock = millis()+10000;
+	}
+	return true;
 }
 
 void TeXie::handle_line(String line)
@@ -111,6 +173,10 @@ void TeXie::run()
 
 	if (_wifi_state)
 	{
+		if (client.connected() == 0)
+		{
+			TeXie::connect();
+		}
 		while (client.available() > 0) {
 			// read the bytes incoming from the client:
 			char thisChar = client.read();
