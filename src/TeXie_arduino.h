@@ -8,6 +8,12 @@
 #include <ESP8266WiFiMulti.h>
 #endif
 
+#if defined(ESP32)
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include "mbedtls/md.h"
+#endif
+
 struct dataset
 {
 	String stream;
@@ -42,7 +48,12 @@ class TeXie
 		String _line;
 		dataset _line_to_dataset(String line);
 		int _port;
+		#if defined(ESP8266)
 		ESP8266WiFiMulti wifiMulti;
+		#endif
+		#if defined(ESP32)
+		WiFiMulti wifiMulti;
+		#endif
 		bool _wifi_state;
 		String _secret;
 		char* _state;

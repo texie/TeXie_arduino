@@ -3,8 +3,46 @@
 #if defined(ESP8266)
 #include <ESP8266WiFi.h>
 #include <ESP8266WiFiMulti.h>
-#endif
 #include <Hash.h>
+#endif
+
+#if defined(ESP32)
+#include <WiFi.h>
+#include <WiFiMulti.h>
+#include "mbedtls/md.h"
+
+String sha1(String payload)
+{
+  byte shaResult[20];
+   
+  mbedtls_md_context_t ctx;
+  mbedtls_md_type_t md_type = MBEDTLS_MD_SHA1;
+   
+  const size_t payloadLength = payload.length();
+   
+  mbedtls_md_init(&ctx);
+  mbedtls_md_setup(&ctx, mbedtls_md_info_from_type(md_type), 0);
+  mbedtls_md_starts(&ctx);
+  char payload2[payloadLength];
+  for (int a=0;a<=payloadLength;a++)
+  {
+    payload2[a]=payload[a];
+  }
+  mbedtls_md_update(&ctx, (const unsigned char *) payload2, payloadLength);
+  mbedtls_md_finish(&ctx, shaResult);
+  mbedtls_md_free(&ctx);
+   
+  String erg;
+  for(int i= 0; i< sizeof(shaResult); i++)
+  {
+  char str[3];
+  sprintf(str, "%02x", (int)shaResult[i]);
+  erg = erg + str;
+  }
+  return erg;
+}
+
+#endif
 
 TeXie::TeXie()
 {}
@@ -53,7 +91,7 @@ bool TeXie::connect()
 	if (_apicount == 0)
 	{
 		IPAddress tmp;
-		WiFi.hostByName("api.count.texie.io", tmp, 5000);
+		WiFi.hostByName("api.count.texie.io", tmp);  //, 5000);
 		_apicount = tmp[3];
 		_apicount_current = random(1, _apicount+1);
 	}
@@ -65,7 +103,7 @@ bool TeXie::connect()
 	char host[hostname.length()+1];
 	hostname.toCharArray(host, hostname.length()+1);
 	IPAddress remote_addr;
-	WiFi.hostByName(host, remote_addr, 5000);
+	WiFi.hostByName(host, remote_addr);  //, 5000);
 	if(client.connect(remote_addr, 10100))
 	{
 		_state = "connected";
